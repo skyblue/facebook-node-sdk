@@ -277,7 +277,7 @@
                 }
                 uri = uri.substring(0, uri.length -1);
             };
-            
+
             pool = { maxSockets : options('maxSockets') || Number(process.env.MAX_SOCKETS) || 5 };
             requestOptions = {
                   method: method
@@ -297,12 +297,12 @@
                     if(error === Object(error) && has(error, 'error')) {
                         return cb(error);
                     }
-                    return cb({error:error});
+                    return cb(error);
                 }
 
                 if(isOAuthRequest && response && response.statusCode === 200 &&
                     response.headers && /.*text\/plain.*/.test(response.headers['content-type'])) {
-                    cb(parseOAuthApiResponse(body));
+                    cb(null, parseOAuthApiResponse(body));
                 } else {
                     var json;
                     try {
@@ -311,12 +311,9 @@
                       // sometimes FB is has API errors that return HTML and a message
                       // of "Sorry, something went wrong". These are infrequent and unpredictable but
                       // let's not let them blow up our application.
-                      json =  { error: {
-                          code: 'JSONPARSE',
-                          Error: ex
-                      }};
+                      error = ex
                     }
-                    cb(json);
+                    cb(error, json);
                 }
             });
         };
@@ -609,7 +606,7 @@
                 if(options('proxy')) {
                     requestOptions['proxy'] = options('proxy');
                 }
-			
+
                 request(
                     requestOptions
                     , function(error, response, body) {
